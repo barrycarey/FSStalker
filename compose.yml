@@ -1,0 +1,45 @@
+version: "3.7"
+services:
+    app:
+      restart: always
+      build:
+        context: .
+        dockerfile: docker/APP
+      environment:
+        - LOG_LEVEL=DEBUG
+      depends_on:
+        - redis
+    mon:
+      restart: always
+      build:
+        context: .
+        dockerfile: docker/APP
+      environment:
+        - LOG_LEVEL=DEBUG
+      depends_on:
+        - redis
+      command: ["python", "-u", "/src/queue_mon.py"]
+    worker:
+      restart: always
+      build:
+        context: .
+        dockerfile: docker/APP
+      environment:
+        - LOG_LEVEL=DEBUG
+      depends_on:
+        - redis
+      entrypoint: celery -A fsstalker.core.celery worker -Q check_posts,load_subreddits,notify -c 3 --uid=nobody --gid=nogroup
+    flower:
+      restart: always
+      build:
+        context: .
+        dockerfile: docker/APP
+      environment:
+        - LOG_LEVEL=DEBUG
+      depends_on:
+        - redis
+      ports:
+      - 5555:5555
+      entrypoint: celery -A fsstalker.core.celery flower --port=5555
+    redis:
+      image: "redis:alpine"

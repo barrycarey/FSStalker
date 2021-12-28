@@ -19,3 +19,4 @@ error_filter = SingleLevelFilter(logging.WARNING)
 error_handler.setFormatter(formatter)
 error_handler.addFilter(error_filter)
 log.addHandler(error_handler)
+log.propagate = False

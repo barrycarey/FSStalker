@@ -1,3 +1,11 @@
 pymysql
 sqlalchemy
-
+apprise
+praw
+celery[redis]
+cryptography
+requests
+flower
+fastapi
+uvicorn
+pydantic

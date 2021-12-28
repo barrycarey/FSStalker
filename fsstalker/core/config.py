@@ -1,16 +1,17 @@
 import os
 import sys
 from configparser import ConfigParser
-from typing import Text, NoReturn
+from typing import Text, NoReturn, Optional
 
 from fsstalker.core.logging import log
 
 
 class Config:
 
-    def __init__(self, config_file: Text = None, **settings):
-        self.loaded_config = None
+    def __init__(self, config_file: Text = None, **custom):
+        self.loaded_config = ConfigParser()
         self._load_config(config_file=config_file)
+        self._custom = custom
 
     def _load_config(self, config_file=None) -> NoReturn:
         """
@@ -35,7 +36,7 @@ class Config:
             config_to_load = os.path.join(module_dir, 'config.ini'), 'module'
 
         log.debug(f'Checking for config in current dir: %s', os.getcwd())
-        if not config_to_load and os.path.isfile('sleuth_config.json'):
+        if not config_to_load and os.path.isfile('config.ini'):
             log.info('Found config.ini in current directory')
             config_to_load = os.path.join(os.getcwd(), 'config.ini'), 'cwd'
 
@@ -57,4 +58,92 @@ class Config:
             return
 
         log.info('Config Source: %s | Config File: %s', config_to_load[1], config_to_load[0])
-        self.loaded_config = ConfigParser(config_to_load[0])
+        self.loaded_config.read(config_to_load[0])
+
+    def _fetch_config_value(self, key, section) -> Optional[Text]:
+        """
+        Take a key and section and attempt to load the config
+        :rtype: Text
+        :param key:
+        :param section:
+        """
+        section = section.upper()
+        combined_key = f'{section.lower()}_{key}'
+        env_value = os.getenv(combined_key, default=None)
+        custom_value = self._custom.get(combined_key)
+        ini_value = None
+        if self.loaded_config.has_section(section):
+            ini_value = self.loaded_config[section].get(key)
+
+        return env_value or custom_value or ini_value
+
+    @property
+    def database_user(self):
+        return self._fetch_config_value('username', 'database')
+
+    @property
+    def database_password(self):
+        return self._fetch_config_value('password', 'database')
+
+    @property
+    def database_name(self):
+        return self._fetch_config_value('name', 'database')
+
+    @property
+    def database_hostname(self):
+        return self._fetch_config_value('hostname', 'database')
+
+    @property
+    def database_port(self):
+        port = self._fetch_config_value('port', 'database')
+        try:
+            port = int(port)
+        except TypeError:
+            pass
+        return port
+
+    @property
+    def reddit_client_id(self):
+        return self._fetch_config_value('client_id', 'reddit')
+
+    @property
+    def reddit_client_secret(self):
+        return self._fetch_config_value('client_secret', 'reddit')
+
+    @property
+    def reddit_client_secret(self):
+        return self._fetch_config_value('client_secret', 'reddit')
+
+    @property
+    def reddit_useragent(self):
+        return self._fetch_config_value('useragent', 'reddit')
+
+    @property
+    def reddit_username(self):
+        return self._fetch_config_value('username', 'reddit')
+
+    @property
+    def reddit_password(self):
+        return self._fetch_config_value('password', 'reddit')
+
+    @property
+    def redis_url(self):
+        if not self.redis_password:
+            return f'redis://{self.redis_host}:{self.redis_port}/{self.redis_database}'
+        return f'redis://user:{self.redis_password}@{self.redis_host}:{self.redis_port}/{self.redis_database}'
+
+    @property
+    def redis_host(self):
+        return self._fetch_config_value('host', 'redis')
+
+    @property
+    def redis_port(self):
+        return self._fetch_config_value('port', 'redis')
+
+    @property
+    def redis_database(self):
+        return self._fetch_config_value('database', 'redis')
+
+    @property
+    def redis_password(self):
+        return self._fetch_config_value('password', 'redis')
