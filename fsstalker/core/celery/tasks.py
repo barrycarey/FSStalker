@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Text, NoReturn, List
 
 from apprise import Apprise
@@ -49,7 +50,11 @@ def send_notification_task(self, watch_id: int, match: Text, submission: Submiss
             SentNotification(
                 triggered_post=submission.id,
                 watch=watch,
-                triggered_word=match
+                triggered_word=match,
+                submission_created_at=datetime.fromtimestamp(submission.created_utc)
             )
         )
-        uow.commit()
+        try:
+            uow.commit()
+        except Exception as e:
+            log.exception()

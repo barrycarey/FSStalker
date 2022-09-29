@@ -5,7 +5,7 @@ praw
 celery[redis]
 cryptography
 requests
-flower
 fastapi
 uvicorn
 pydantic
+alembic

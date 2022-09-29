@@ -8,5 +8,6 @@ class RepoBase:
     def add(self, item: Base):
         self.db_session.add(item)
 
+
     def remove(self, item: Base):
         self.db_session.delete(item)

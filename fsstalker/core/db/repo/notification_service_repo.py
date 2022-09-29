@@ -13,3 +13,6 @@ class NotificationServiceRepo(RepoBase):
 
     def get_all(self, limit: int = None, offset: int = None) -> List[NotificationService]:
         return self.db_session.query(NotificationService).limit(limit).offset(offset).all()
+
+    def get_by_id(self, id: int) -> NotificationService:
+        return self.db_session.query(NotificationService).filter(NotificationService.id == id).first()

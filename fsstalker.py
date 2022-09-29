@@ -22,6 +22,7 @@ redis = Redis(
 
 while True:
     if len(redis.lrange('load_subreddits', 0, 20000)) > 0 or len(redis.lrange('check_posts', 0, 20000)) > 0:
+        log.info('Redis queue still has incomplete tasks')
         time.sleep(5)
         continue
     with uowm.start() as uow:

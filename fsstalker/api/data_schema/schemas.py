@@ -3,10 +3,20 @@ from typing import Text, List
 from pydantic import BaseModel
 
 
+
+
+class NotificationSvcSchema(BaseModel):
+    id: int = None
+    url: str
+    owner_id: int = None
+    name: str
+
 class WatchSchema(BaseModel):
-    owner_id: int
-    subreddit: Text
+    id: int = None
+    owner_id: int = None
+    name: str
+    subreddit: str
     active: bool
-    include: List[Text]
-    exclude: List[Text]
-    notification_svc: List[int]
+    include: str
+    exclude: str
+    notification_services: List[NotificationSvcSchema]

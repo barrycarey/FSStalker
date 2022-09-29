@@ -2,6 +2,7 @@ from typing import List, Text, NoReturn, Optional, Dict
 
 from praw import Reddit
 from praw.models import Submission
+from prawcore import PrawcoreException, Forbidden
 from sqlalchemy.exc import IntegrityError
 
 from fsstalker.core.db.db_models import CheckedPost, Watch
@@ -39,7 +40,7 @@ def submission_type_filter(submission_type: Text):
 
     return type_filter
 
-def load_subreddit_submissions(uowm: UnitOfWorkManager, reddit: Reddit, subreddit_name: Text) -> List[Submission]:
+def load_subreddit_submissions(uowm: UnitOfWorkManager, reddit: Reddit, subreddit_name: str) -> List[Submission]:
     """
     Load submissions from given subreddit, remove all non-text posts and already checked posts
     :param uowm:
@@ -47,7 +48,11 @@ def load_subreddit_submissions(uowm: UnitOfWorkManager, reddit: Reddit, subreddi
     :param subreddit_name:
     :return:
     """
-    submissions = list(reddit.subreddit(subreddit_name).new(limit=500))
+    try:
+        submissions = list(reddit.subreddit(subreddit_name).new(limit=500))
+    except Forbidden as e:
+        log.error('Forbidden from checking subreddit %s', subreddit_name)
+        return []
     log.debug('Loaded %s submissions from %s pre-filter', len(submissions), subreddit_name)
     submissions = list(filter(checked_submission_filter(uowm), submissions))
     submissions = list(filter(submission_type_filter('text'), submissions))
@@ -68,7 +73,7 @@ def create_checked_post(uowm: UnitOfWorkManager, submission_id: Text) -> NoRetur
         try:
             uow.commit()
         except IntegrityError as e:
-            log.exception('Failed to save checked post', exc_info=True)
+            log.exception('Failed to save checked post: %s', e, exc_info=False)
 
 
 def check_submission_for_watches(submission: Submission, watches: List[Watch]) -> List[Dict]:

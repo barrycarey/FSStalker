@@ -14,6 +14,7 @@ association_table = Table('watch_to_notification', Base.metadata,
     Column('watch_id', Integer, ForeignKey('watch.id')),
     Column('notification_service_id', Integer, ForeignKey('notification_service.id'))
 )
+
 class Watch(Base):
     __tablename__ = 'watch'
     __table_args__ = (
@@ -37,6 +38,7 @@ class Watch(Base):
     )
 
 
+
 class NotificationService(Base):
     __tablename__ = 'notification_service'
     id = Column(Integer, primary_key=True)
@@ -55,6 +57,7 @@ class SentNotification(Base):
     __tablename__ = 'sent_notification'
     id = Column(Integer, primary_key=True)
     sent_at = Column(DateTime, default=func.utc_timestamp())
+    submission_created_at = Column(DateTime, nullable=False)
     triggered_post = Column(String(6), nullable=False)
     triggered_word = Column(String(100), nullable=False)
     watch_id = Column(Integer, ForeignKey('watch.id'))
@@ -71,7 +74,17 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(20), nullable=False, unique=True)
     created_at = Column(DateTime, default=func.utc_timestamp())
-    is_premium = Column(Boolean, default=False)
+    patreon_tier_id = Column(Integer, ForeignKey('patreon_tiers.id'))
     is_mod = Column(Boolean, default=False)
+    patreon_id = Column(String(30))
     watches = relationship("Watch", back_populates='owner')
     notification_services = relationship("NotificationService", back_populates='owner')
+    patreon_tier = relationship("PatreonTiers")
+
+class PatreonTiers(Base):
+    __tablename__ = 'patreon_tiers'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(40), nullable=False)
+    max_watches = Column(Integer, nullable=False, default=1)
+    max_notification_services = Column(Integer, nullable=False, default=1)
+    notify_delay = Column(Integer, nullable=False, default=1800)

@@ -130,7 +130,7 @@ class Config:
     def redis_url(self):
         if not self.redis_password:
             return f'redis://{self.redis_host}:{self.redis_port}/{self.redis_database}'
-        return f'redis://user:{self.redis_password}@{self.redis_host}:{self.redis_port}/{self.redis_database}'
+        return f'redis://:{self.redis_password}@{self.redis_host}:{self.redis_port}/{self.redis_database}'
 
     @property
     def redis_host(self):
