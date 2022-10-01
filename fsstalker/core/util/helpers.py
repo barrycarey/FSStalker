@@ -8,6 +8,7 @@ from prawcore import Forbidden
 from sqlalchemy import create_engine
 
 from fsstalker.core.config import Config
+from fsstalker.core.db.unit_of_work_manager import UnitOfWorkManager
 from fsstalker.core.logging import log
 
 
@@ -76,3 +77,25 @@ def get_reddit_user_data(token: Text, user_agent: Text = 'windows.repostsleuthbo
     if r.status_code != 200:
         return
     return json.loads(r.text)
+
+def get_patreon_tier_id(api_data: dict, username: str, uowm: UnitOfWorkManager) -> Optional[int]:
+    log.info('Attempting to get Patreon tier for %s', username)
+    if 'included' not in api_data:
+        log.error('No Include data in Patron API response')
+        return
+
+    tier_data = next((x for x in api_data['included'] if x['type'] == 'tier'), None)
+
+    if not tier_data:
+        log.error('No tier data in API response')
+        return
+
+
+    with uowm.start() as uow:
+        tier = uow.patreon_tier.get_by_tier_id(tier_data['id'])
+        if not tier:
+            log.error('Failed to find Patreon tier with ID %s', tier_data['id'])
+            return
+
+        return tier.id
+

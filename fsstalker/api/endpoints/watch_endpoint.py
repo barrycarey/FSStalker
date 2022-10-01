@@ -44,11 +44,15 @@ def create_watch(new_watch: WatchSchema, token: Text, uowm: UnitOfWorkManager = 
         if [x for x in user.watches if x.subreddit == new_watch.subreddit]:
             raise HTTPException(status_code=422, detail=f'You already have a watch for {new_watch.subreddit}')
 
+        if len(user.watches) >= user.patreon_tier.max_watches:
+            raise HTTPException(status_code=422, detail='You have exceeded the max number of allowed watches')
+
         watch = Watch(
             subreddit=new_watch.subreddit,
             name=new_watch.name,
             include=new_watch.include,
             exclude=new_watch.exclude,
+            active=new_watch.active,
             owner=user,
             notification_services=[ns for ns in user.notification_services if ns.id in new_watch.notification_services]
         )
@@ -74,6 +78,9 @@ def create_watch(watch: WatchSchema, token: Text, uowm: UnitOfWorkManager = Depe
         if user.id != existing_watch.owner_id and not user.is_mod:
             raise HTTPException(status_code=403, detail='You do not own this Watch')
 
+        if len(user.watches) > user.patreon_tier.max_watches:
+            raise HTTPException(status_code=422, detail='You have exceeded the max number of allowed watches')
+
         notification_services = []
         for svc in watch.notification_services:
             existing_notify_svc = uow.notification_service.get_by_id(svc.id)
@@ -84,6 +91,7 @@ def create_watch(watch: WatchSchema, token: Text, uowm: UnitOfWorkManager = Depe
         existing_watch.include = watch.include
         existing_watch.exclude = watch.exclude
         existing_watch.name = watch.name
+        existing_watch.active = watch.active
 
         uow.commit()
         return existing_watch

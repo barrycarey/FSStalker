@@ -79,11 +79,13 @@ class User(Base):
     patreon_id = Column(String(30))
     watches = relationship("Watch", back_populates='owner')
     notification_services = relationship("NotificationService", back_populates='owner')
-    patreon_tier = relationship("PatreonTiers")
+    patreon_tier = relationship("PatreonTier")
 
-class PatreonTiers(Base):
+class PatreonTier(Base):
     __tablename__ = 'patreon_tiers'
     id = Column(Integer, primary_key=True)
+    tier_id = Column(Integer)
+    tier_name = Column(String(50))
     name = Column(String(40), nullable=False)
     max_watches = Column(Integer, nullable=False, default=1)
     max_notification_services = Column(Integer, nullable=False, default=1)

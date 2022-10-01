@@ -147,3 +147,15 @@ class Config:
     @property
     def redis_password(self):
         return self._fetch_config_value('password', 'redis')
+
+    @property
+    def patreon_client_id(self):
+        return self._fetch_config_value('client_id', 'patreon')
+
+    @property
+    def patreon_client_secret(self):
+        return self._fetch_config_value('client_secret', 'patreon')
+
+    @property
+    def patreon_redirect_uri(self):
+        return self._fetch_config_value('redirect_uri', 'patreon')

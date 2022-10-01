@@ -86,7 +86,7 @@ def check_submission_for_watches(submission: Submission, watches: List[Watch]) -
         )
         if match:
             log.info('Post %s matches word %s for watch %s', submission.id, match, watch.id)
-            results.append({'watch_id': watch.id, 'match_word': match, 'submission': submission})
+            results.append({'watch_id': watch.id, 'match_word': match, 'submission': submission, 'owner_id': watch.owner_id})
     return results
 
 def check_watches(uowm: UnitOfWorkManager, submissions: List[Submission]) -> List[dict]:

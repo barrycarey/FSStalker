@@ -8,17 +8,14 @@ from fsstalker.core.db.unit_of_work_manager import UnitOfWorkManager
 from fsstalker.core.logging import log
 from fsstalker.core.util.helpers import get_db_engine, get_reddit_user_data, get_patreon_tier_id
 
-auth_router = APIRouter()
+patreon_router = APIRouter()
 
 uowm = UnitOfWorkManager(get_db_engine(Config()))
 
 def get_uowm():
     return uowm
 
-# gets member list with owner token
-# https://www.patreon.com/api/oauth2/v2/campaigns/9343789/members?include=currently_entitled_tiers,user
-
-@auth_router.get('/auth/patreoncb')
+@patreon_router.post('/patreon/auth')
 def patreon_cb(code: str, state: str, uowm: UnitOfWorkManager = Depends(get_uowm)):
     log.info('Attempting to link Patreon account')
     config = Config()

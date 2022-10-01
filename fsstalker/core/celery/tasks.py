@@ -30,9 +30,11 @@ def load_subreddit_task(self, subreddit: Text) -> NoReturn:
 @celery.task(bind=True, base=FsStalkerTask)
 def process_submissions_task(self, submissions: List[Submission]) -> NoReturn:
     results = check_watches(self.uowm, submissions)
-    for result in results:
-        log.info('Queue notification for watch %s for word %s', result['watch_id'], result['match_word'])
-        send_notification_task.apply_async((result['watch_id'], result['match_word'], result['submission']))
+    with self.uowm.start() as uow:
+        for result in results:
+            user = uow.user.get_by_id(result['owner_id'])
+            log.info('Queue notification for watch %s for word %s with %s second delay', result['watch_id'], result['match_word'], user.patreon_tier.notify_delay)
+            send_notification_task.apply_async((result['watch_id'], result['match_word'], result['submission']), countdown=user.patreon_tier.notify_delay)
 
 @celery.task(bind=True, base=FsStalkerTask)
 def send_notification_task(self, watch_id: int, match: Text, submission: Submission) -> NoReturn:
@@ -45,16 +47,22 @@ def send_notification_task(self, watch_id: int, match: Text, submission: Submiss
             return
         for notify_svc in watch.notification_services:
             apprise.add(notify_svc.url)
-        apprise.notify(f'Found a match for word {match} in subreddit r/{submission.subreddit.display_name}. https://redd.it/{submission.id}', 'title')
+        submission_created = datetime.utcfromtimestamp(submission.created_utc)
+        delta = datetime.utcnow() - submission_created
+        apprise.notify(f'Found a match for word {match} in subreddit r/{submission.subreddit.display_name}. https://redd.it/{submission.id} \n\nNotification Delay: {delta.seconds} seconds', f'Watch {watch.name} Alert!')
         uow.sent_notification.add(
             SentNotification(
                 triggered_post=submission.id,
                 watch=watch,
                 triggered_word=match,
-                submission_created_at=datetime.fromtimestamp(submission.created_utc)
+                submission_created_at=datetime.utcfromtimestamp(submission.created_utc)
             )
         )
         try:
             uow.commit()
         except Exception as e:
             log.exception()
+
+@celery.task(bind=True, base=FsStalkerTask)
+def update_patreon_members(self) -> NoReturn:
+    log('----------> Updating Patron members')

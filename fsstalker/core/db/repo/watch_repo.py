@@ -23,7 +23,7 @@ class WatchRepo(RepoBase):
         return self.db_session.query(Watch).options(joinedload(Watch.notification_services), joinedload(Watch.sent_notifications)).filter(Watch.owner_id == owner_id).all()
 
     def get_by_subreddit(self, subreddit: Text) -> List[Watch]:
-        return self.db_session.query(Watch).filter(Watch.subreddit == subreddit).all()
+        return self.db_session.query(Watch).filter(Watch.subreddit == subreddit, Watch.active == True).all()
 
     def get_distinct_subreddits(self):
         return self.db_session.query(Watch.subreddit).distinct().all()
