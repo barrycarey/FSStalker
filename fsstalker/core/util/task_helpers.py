@@ -5,6 +5,7 @@ from praw.models import Submission
 from prawcore import PrawcoreException, Forbidden
 from sqlalchemy.exc import IntegrityError
 
+from fsstalker.core.common.models.patreon import PatreonMemberData
 from fsstalker.core.db.db_models import CheckedPost, Watch
 from fsstalker.core.db.unit_of_work_manager import UnitOfWorkManager
 from fsstalker.core.logging import log
@@ -104,3 +105,61 @@ def check_watches(uowm: UnitOfWorkManager, submissions: List[Submission]) -> Lis
 
     return results
 
+def convert_raw_patreon_member_data(member_data: dict) -> list[PatreonMemberData]:
+    """
+    Parse the raw Patreon member response and return a stripped down dataclass with the values we need
+    :param member_data: Raw API data
+    :return: List of PatreonMemberData
+    """
+    results = []
+    for member in member_data['data']:
+        log.debug(member)
+        results.append(
+            PatreonMemberData(
+                user_id=member['relationships']['user']['data']['id'],
+                tier=member['relationships']['currently_entitled_tiers']['data'][0]['id'],
+                status=member['attributes']['patron_status']
+            )
+        )
+
+    return results
+def patreon_member_update(member_data: dict, uowm: UnitOfWorkManager) -> NoReturn:
+    """
+    Take the raw API result for Patreon campaign members and check them against the database.
+    Adjust user's tiers where needed
+    :param member_data: Raw Patreon API result
+    :param uowm: UnitOfWorkManager
+    :return: None
+    """
+    try:
+        patreon_data = convert_raw_patreon_member_data(member_data)
+    except KeyError:
+        log.error('Failed to convert raw Patreon member data')
+        return
+    except Exception as e:
+        log.exception('Unknown Patreon member conversion error')
+        return
+
+    with uowm.start() as uow:
+        users = uow.user.get_all()
+        for user in users:
+            patreon_user = next((x for x in patreon_data if user.patreon_id == x.user_id), None)
+            if not patreon_user:
+                log.error('No Patreon data for user %s', user.username)
+                continue
+            if patreon_user.status != 'active_patron':
+                log.info('%s is inactive on Patreon. Setting to free tier')
+                user.patreon_tier_id = 1
+                continue
+
+            tier = uow.patreon_tier.get_by_tier_id(patreon_user.tier)
+            if not tier:
+                log.critical('Failed to find existing tier with ID %s', patreon_user.tier)
+                continue
+
+            if user.patreon_tier_id != tier.id:
+                log.info('Changing user %s to tier %s', user.username, tier.name)
+                user.patreon_tier_id = tier.id
+
+        log.info('Finished refreshing Patreon member data')
+        uow.commit()

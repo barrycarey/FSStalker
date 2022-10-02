@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch, PropertyMock, Mock
 
 from fsstalker.core.db.db_models import Watch
 from fsstalker.core.util.task_helpers import submission_type_filter, checked_submission_filter, \
-    check_submission_for_watches, check_watches
+    check_submission_for_watches, check_watches, convert_raw_patreon_member_data
 
 
 class TestTaskHelpers(TestCase):
@@ -102,3 +102,56 @@ class TestTaskHelpers(TestCase):
         expected = {'watch_id': 1, 'match_word': '8tb', 'submission': submissions[0]}
         self.assertIsNotNone(r)
         self.assertDictEqual(r[0], expected)
+
+    def test_convert_raw_patreon_member_data(self):
+        test_data = {
+            'data': [
+                {
+                    'attributes': {
+                        'patron_status': 'active_patron'
+                    },
+                    'relationships': {
+                        'currently_entitled_tiers': {
+                            'data': [
+                                {
+                                    'id': 9139774,
+                                    'type': 'tier'
+                                }
+                            ]
+                        },
+                        'user': {
+                            'data': {
+                                'id': 39041022,
+                                'type': 'user'
+                            }
+                        }
+                    }
+                },
+                {
+                    'attributes': {
+                        'patron_status': 'active_patron'
+                    },
+                    'relationships': {
+                        'currently_entitled_tiers': {
+                            'data': [
+                                {
+                                    'id': 9139775,
+                                    'type': 'tier'
+                                }
+                            ]
+                        },
+                        'user': {
+                            'data': {
+                                'id': 80557933,
+                                'type': 'user'
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+
+        res = convert_raw_patreon_member_data(test_data)
+        self.assertEqual(2, len(res))
+        self.assertEqual(res[0].tier, 9139774)
+        self.assertEqual(res[0].user_id, 39041022)

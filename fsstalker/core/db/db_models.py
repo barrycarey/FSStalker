@@ -81,6 +81,9 @@ class User(Base):
     notification_services = relationship("NotificationService", back_populates='owner')
     patreon_tier = relationship("PatreonTier")
 
+    def __repr__(self):
+        return f'User {self.username}'
+
 class PatreonTier(Base):
     __tablename__ = 'patreon_tiers'
     id = Column(Integer, primary_key=True)

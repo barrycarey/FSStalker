@@ -1,6 +1,8 @@
+import json
 from datetime import datetime
 from typing import Text, NoReturn, List
 
+import requests
 from apprise import Apprise
 from celery import Task
 from praw.models import Submission
@@ -11,7 +13,7 @@ from fsstalker.core.db.db_models import SentNotification, CheckedPost
 from fsstalker.core.db.unit_of_work_manager import UnitOfWorkManager
 from fsstalker.core.logging import log
 from fsstalker.core.util.helpers import get_db_engine, get_reddit_instance, post_includes_words
-from fsstalker.core.util.task_helpers import load_subreddit_submissions, check_watches
+from fsstalker.core.util.task_helpers import load_subreddit_submissions, check_watches, patreon_member_update
 
 
 class FsStalkerTask(Task):
@@ -65,4 +67,15 @@ def send_notification_task(self, watch_id: int, match: Text, submission: Submiss
 
 @celery.task(bind=True, base=FsStalkerTask)
 def update_patreon_members(self) -> NoReturn:
-    log('----------> Updating Patron members')
+    res = requests.get(
+        'https://www.patreon.com/api/oauth2/v2/campaigns/9343789/members?include=currently_entitled_tiers,user&fields%5Bmember%5D=patron_status',
+        headers={'Authorization': f'Bearer {self.config.patreon_auth_token}'}
+    )
+
+    if res.status_code != 200:
+        log.error('Bad status code when fetching Patreon member data')
+        return
+
+    member_data = json.loads(res.text)
+
+    patreon_member_update(member_data, self.uowm)

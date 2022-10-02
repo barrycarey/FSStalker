@@ -97,5 +97,5 @@ def get_patreon_tier_id(api_data: dict, username: str, uowm: UnitOfWorkManager) 
             log.error('Failed to find Patreon tier with ID %s', tier_data['id'])
             return
 
-        return tier.id
+        return tier.user_id
 

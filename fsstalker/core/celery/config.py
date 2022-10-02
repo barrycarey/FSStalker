@@ -11,7 +11,15 @@ result_expires = 60
 task_routes = {
     'fsstalker.core.celery.tasks.load_subreddit_task': {'queue': 'load_subreddits'},
     'fsstalker.core.celery.tasks.process_submissions_task': {'queue': 'check_posts'},
-    'fsstalker.core.celery.tasks.send_notification_task': {'queue': 'notify'}
+    'fsstalker.core.celery.tasks.send_notification_task': {'queue': 'notify'},
+    'fsstalker.core.celery.tasks.update_patreon_members': {'queue': 'update_patreon_members'}
+}
+
+beat_schedule = {
+    'patreon-member-update': {
+        'task': 'fsstalker.core.celery.tasks.update_patreon_members',
+        'schedule': 10.0
+    }
 }
 
 imports = 'fsstalker.core.celery.tasks'

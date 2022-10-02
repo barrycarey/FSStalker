@@ -159,3 +159,7 @@ class Config:
     @property
     def patreon_redirect_uri(self):
         return self._fetch_config_value('redirect_uri', 'patreon')
+
+    @property
+    def patreon_auth_token(self):
+        return self._fetch_config_value('auth_token', 'patreon')

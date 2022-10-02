@@ -28,7 +28,7 @@ services:
         - LOG_LEVEL=DEBUG
       depends_on:
         - redis
-      entrypoint: celery -A fsstalker.core.celery worker -Q check_posts,load_subreddits,notify -c 3 --uid=nobody --gid=nogroup
+      entrypoint: celery -A fsstalker.core.celery worker -B -Q check_posts,load_subreddits,notify,update_patreon_members -c 3 --uid=nobody --gid=nogroup
     flower:
       restart: always
       build:

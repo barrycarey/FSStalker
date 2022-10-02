@@ -14,6 +14,8 @@ class UserRepo(RepoBase):
     def get_by_id(self, id: int) -> User:
         return self.db_session.query(User).filter(User.id == id).first()
 
+    def get_all(self, limit: int = None, offset: int = None) -> list[User]:
+        return self.db_session.query(User).limit(limit).offset(offset).all()
     def get_or_create_by_username(self, username: str) -> User:
         user = self.db_session.query(User).filter(User.username == username).first()
         if not user:
