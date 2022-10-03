@@ -6,14 +6,9 @@ from fsstalker.core.db.unit_of_work_manager import UnitOfWorkManager
 from fsstalker.core.util.helpers import get_db_engine, get_reddit_user_data
 
 user_router = APIRouter()
-
 uowm = UnitOfWorkManager(get_db_engine(Config()))
-
-
 def get_uowm():
     return uowm
-
-
 @user_router.get('/user/{username}')
 def get_user(token: str, username: str, uowm: UnitOfWorkManager = Depends(get_uowm)):
     user_data = get_reddit_user_data(token)
