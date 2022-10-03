@@ -23,6 +23,6 @@ def get_watches(username: str, token: str, uowm: UnitOfWorkManager = Depends(get
         if user.username.lower() != username and not user.is_mod:
             raise HTTPException(status_code=403, detail='Unauthorized')
 
-        return uow.watch.get_by_owner_id_with_notifications(user.user_id)
+        return uow.watch.get_by_owner_id_with_notifications(user.id)
 
 

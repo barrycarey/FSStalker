@@ -30,9 +30,9 @@ class Watch(Base):
     name = Column(String(200), nullable=False)
 
     owner = relationship("User", back_populates='watches')
-    sent_notifications = relationship("SentNotification", back_populates='watch')
+    sent_notifications = relationship('SentNotification', back_populates='watch')
     notification_services = relationship(
-        "NotificationService",
+        'NotificationService',
         secondary=association_table,
         back_populates='watches'
     )
@@ -45,7 +45,7 @@ class NotificationService(Base):
     url = Column(String(200), nullable=False, unique=True)
     owner_id = Column(Integer, ForeignKey('user.id'))
     name = Column(String(200), nullable=False)
-    owner = relationship("User", back_populates='notification_services')
+    owner = relationship('User', back_populates='notification_services')
     watches = relationship(
         "Watch",
         secondary=association_table,
@@ -61,7 +61,7 @@ class SentNotification(Base):
     triggered_post = Column(String(6), nullable=False)
     triggered_word = Column(String(100), nullable=False)
     watch_id = Column(Integer, ForeignKey('watch.id'))
-    watch = relationship("Watch", back_populates='sent_notifications')
+    watch = relationship('Watch', back_populates='sent_notifications')
 
 class CheckedPost(Base):
     __tablename__ = 'checked_post'
@@ -74,12 +74,14 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(20), nullable=False, unique=True)
     created_at = Column(DateTime, default=func.utc_timestamp())
-    patreon_tier_id = Column(Integer, ForeignKey('patreon_tiers.id'))
+    patreon_tier_id = Column(Integer, ForeignKey('patreon_tiers.id'), default=1)
     is_mod = Column(Boolean, default=False)
+    is_exempt = Column(Boolean, default=False)
     patreon_id = Column(String(30))
-    watches = relationship("Watch", back_populates='owner')
+    watches = relationship('Watch', back_populates='owner')
     notification_services = relationship("NotificationService", back_populates='owner')
-    patreon_tier = relationship("PatreonTier")
+    patreon_tier = relationship('PatreonTier')
+    user_notifications = relationship('UserNotification', back_populates='owner')
 
     def __repr__(self):
         return f'User {self.username}'
@@ -88,8 +90,17 @@ class PatreonTier(Base):
     __tablename__ = 'patreon_tiers'
     id = Column(Integer, primary_key=True)
     tier_id = Column(Integer)
-    tier_name = Column(String(50))
     name = Column(String(40), nullable=False)
     max_watches = Column(Integer, nullable=False, default=1)
     max_notification_services = Column(Integer, nullable=False, default=1)
     notify_delay = Column(Integer, nullable=False, default=1800)
+
+class UserNotification(Base):
+    __tablename__ = 'user_notification'
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, default=func.utc_timestamp())
+    read = Column(Boolean, default=False)
+    owner_id = Column(Integer, ForeignKey('user.id'))
+    message = Column(String(300), nullable=False)
+
+    owner = relationship('User', back_populates='user_notifications')

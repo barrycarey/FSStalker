@@ -4,6 +4,7 @@ from fsstalker.core.db.repo.checked_post_repo import CheckedPostRepo
 from fsstalker.core.db.repo.notification_service_repo import NotificationServiceRepo
 from fsstalker.core.db.repo.patreon_tier_repo import PatreonTierRepo
 from fsstalker.core.db.repo.sent_notification_repo import SentNotificationRepo
+from fsstalker.core.db.repo.user_notificaiton_repo import UserNotificationRepo
 from fsstalker.core.db.repo.user_repo import UserRepo
 from fsstalker.core.db.repo.watch_repo import WatchRepo
 
@@ -49,3 +50,7 @@ class UnitOfWork():
     @property
     def patreon_tier(self) -> PatreonTierRepo:
         return PatreonTierRepo(self.session)
+
+    @property
+    def user_notifications(self) -> UserNotificationRepo:
+        return UserNotificationRepo(self.session)

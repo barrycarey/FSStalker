@@ -1,4 +1,7 @@
-gunicorn
-falcon
 praw
 requests
+fastapi
+uvicorn
+sqlalchemy
+pymysql
+cryptography

@@ -8,6 +8,9 @@ from fsstalker.core.db.repo.repo_base import RepoBase
 
 class UserRepo(RepoBase):
 
+    def add(self, user: User):
+        self.db_session.add(user)
+
     def get_by_username(self, username: str) -> User:
         return self.db_session.query(User).filter(User.username == username).first()
 

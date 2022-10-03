@@ -50,7 +50,7 @@ def create_notification_svc(token: str, notification_svc: NotificationSvcSchema,
             acting_notification_svc.name = notification_svc.name
             acting_notification_svc.url = notification_svc.url
         else:
-            acting_notification_svc = NotificationService(owner_id=user.user_id, name=notification_svc.name, url=notification_svc.url)
+            acting_notification_svc = NotificationService(owner_id=user.id, name=notification_svc.name, url=notification_svc.url)
             uow.notification_service.add(acting_notification_svc)
         try:
             uow.commit()
@@ -72,7 +72,7 @@ def create_notification_svc(token: str, id: int, uowm: UnitOfWorkManager = Depen
         if not notification_svc:
             raise HTTPException(status_code=404, detail='Failed to find notification service with given ID')
 
-        if notification_svc.owner_id != user.user_id and not user.is_mod:
+        if notification_svc.owner_id != user.id and not user.is_mod:
             raise HTTPException(status_code=403, detail='Unauthorized')
 
         uow.notification_service.remove(notification_svc)

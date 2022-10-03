@@ -16,9 +16,7 @@ def get_reddit_instance(config: Config) -> Reddit:
     return Reddit(
                         client_id=config.reddit_client_id,
                         client_secret=config.reddit_client_secret,
-                        password=config.reddit_password,
                         user_agent=config.reddit_useragent,
-                        username=config.reddit_username
                     )
 
 
@@ -73,7 +71,7 @@ def post_includes_words(include_words: List[Text], post_text: Text, exclude_word
 
 def get_reddit_user_data(token: Text, user_agent: Text = 'windows.repostsleuthbot:v0.0.1 (by /u/barrycarey)'):
     headers = {'Authorization': f'Bearer {token}', 'User-Agent': user_agent}
-    r = requests.get('https://oauth.reddit.com/api/v1/me/', headers=headers)
+    r = requests.get('https://oauth.reddit.com/api/v1/me/', headers=headers, timeout=15)
     if r.status_code != 200:
         return
     return json.loads(r.text)
@@ -97,5 +95,5 @@ def get_patreon_tier_id(api_data: dict, username: str, uowm: UnitOfWorkManager) 
             log.error('Failed to find Patreon tier with ID %s', tier_data['id'])
             return
 
-        return tier.user_id
+        return tier.id
 

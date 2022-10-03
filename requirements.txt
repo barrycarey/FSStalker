@@ -5,7 +5,4 @@ praw
 celery[redis]
 cryptography
 requests
-fastapi
-uvicorn
 pydantic
-alembic

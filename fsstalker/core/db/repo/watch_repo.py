@@ -16,10 +16,13 @@ class WatchRepo(RepoBase):
     def get_by_id(self, id: int) -> Watch:
         return self.db_session.query(Watch).options(joinedload(Watch.notification_services)).filter(Watch.id == id).first()
 
-    def get_by_owner_id(self, owner_id: int) -> List[Watch]:
-        return self.db_session.query(Watch).options(joinedload(Watch.notification_services)).filter(Watch.owner_id == owner_id).all()
+    def get_by_owner_id(self, owner_id: int) -> list[Watch]:
+        return self.db_session.query(Watch).options(joinedload(Watch.notification_services)).filter(Watch.owner_id == owner_id).order_by(Watch.created_at.asc()).all()
 
-    def get_by_owner_id_with_notifications(self, owner_id: int) -> List[Watch]:
+    def get_active_by_owner_id(self, owner_id: int) -> list[Watch]:
+        return self.db_session.query(Watch).options(joinedload(Watch.notification_services)).filter(
+            Watch.owner_id == owner_id, Watch.active == True).order_by(Watch.created_at.asc()).all()
+    def get_by_owner_id_with_notifications(self, owner_id: int) -> list[Watch]:
         return self.db_session.query(Watch).options(joinedload(Watch.notification_services), joinedload(Watch.sent_notifications)).filter(Watch.owner_id == owner_id).all()
 
     def get_by_subreddit(self, subreddit: Text) -> List[Watch]:

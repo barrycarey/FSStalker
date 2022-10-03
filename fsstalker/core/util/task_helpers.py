@@ -6,7 +6,7 @@ from prawcore import PrawcoreException, Forbidden
 from sqlalchemy.exc import IntegrityError
 
 from fsstalker.core.common.models.patreon import PatreonMemberData
-from fsstalker.core.db.db_models import CheckedPost, Watch
+from fsstalker.core.db.db_models import CheckedPost, Watch, UserNotification
 from fsstalker.core.db.unit_of_work_manager import UnitOfWorkManager
 from fsstalker.core.logging import log
 from fsstalker.core.util.helpers import get_submission_type, post_includes_words
@@ -143,13 +143,17 @@ def patreon_member_update(member_data: dict, uowm: UnitOfWorkManager) -> NoRetur
     with uowm.start() as uow:
         users = uow.user.get_all()
         for user in users:
+            if user.is_mod or user.is_exempt:
+                log.info('Skipping mod or exempt user %s', user.username)
+                continue
             patreon_user = next((x for x in patreon_data if user.patreon_id == x.user_id), None)
             if not patreon_user:
                 log.error('No Patreon data for user %s', user.username)
                 continue
-            if patreon_user.status != 'active_patron':
+            if patreon_user.status != 'active_patron' and user.patreon_tier_id > 1:
                 log.info('%s is inactive on Patreon. Setting to free tier')
                 user.patreon_tier_id = 1
+                user.user_notifications.append(UserNotification(message='Patreon no longer active. You have been changed to the free tier'))
                 continue
 
             tier = uow.patreon_tier.get_by_tier_id(patreon_user.tier)
@@ -160,6 +164,25 @@ def patreon_member_update(member_data: dict, uowm: UnitOfWorkManager) -> NoRetur
             if user.patreon_tier_id != tier.id:
                 log.info('Changing user %s to tier %s', user.username, tier.name)
                 user.patreon_tier_id = tier.id
+                user.user_notifications.append(
+                    UserNotification(message=f'Patreon tier changed to {tier.name}'))
 
         log.info('Finished refreshing Patreon member data')
+        uow.commit()
+
+def update_watch_limits(uowm: UnitOfWorkManager) -> NoReturn:
+    with uowm.start() as uow:
+        users = uow.user.get_all()
+        for user in users:
+            if user.is_mod or user.is_exempt:
+                log.info('Skipping mod or exempt user %s', user.username)
+                continue
+            watches = uow.watch.get_active_by_owner_id(user.id)
+            if len(watches) > user.patreon_tier.max_watches:
+                excess_watches = len(watches) - user.patreon_tier.max_watches
+                for watch in watches[:excess_watches]:
+                    log.info(f'Disabling over limit watch.  Watch %s for user %s', watch.name, user.username)
+                    watch.active = False
+                user.user_notifications.append(UserNotification(
+                    message=f'You have exceeded your allowed watch limit of {str(user.patreon_tier.max_watches)}. We have disabled the oldest {str(excess_watches)}'))
         uow.commit()

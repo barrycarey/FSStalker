@@ -13,7 +13,8 @@ from fsstalker.core.db.db_models import SentNotification, CheckedPost
 from fsstalker.core.db.unit_of_work_manager import UnitOfWorkManager
 from fsstalker.core.logging import log
 from fsstalker.core.util.helpers import get_db_engine, get_reddit_instance, post_includes_words
-from fsstalker.core.util.task_helpers import load_subreddit_submissions, check_watches, patreon_member_update
+from fsstalker.core.util.task_helpers import load_subreddit_submissions, check_watches, patreon_member_update, \
+    update_watch_limits
 
 
 class FsStalkerTask(Task):
@@ -69,7 +70,8 @@ def send_notification_task(self, watch_id: int, match: Text, submission: Submiss
 def update_patreon_members(self) -> NoReturn:
     res = requests.get(
         'https://www.patreon.com/api/oauth2/v2/campaigns/9343789/members?include=currently_entitled_tiers,user&fields%5Bmember%5D=patron_status',
-        headers={'Authorization': f'Bearer {self.config.patreon_auth_token}'}
+        headers={'Authorization': f'Bearer {self.config.patreon_auth_token}'},
+        timeout=15
     )
 
     if res.status_code != 200:
@@ -77,5 +79,8 @@ def update_patreon_members(self) -> NoReturn:
         return
 
     member_data = json.loads(res.text)
-
     patreon_member_update(member_data, self.uowm)
+
+@celery.task(bind=True, base=FsStalkerTask)
+def enforce_tier_limits(self) -> NoReturn:
+    update_watch_limits(self.uowm)

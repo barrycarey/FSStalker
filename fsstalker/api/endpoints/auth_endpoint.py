@@ -29,7 +29,7 @@ def patreon_cb(code: str, state: str, uowm: UnitOfWorkManager = Depends(get_uowm
         'client_id': config.patreon_client_id,
         'client_secret': config.patreon_client_secret,
         'redirect_uri': config.patreon_redirect_uri
-    })
+    }, timeout=14)
 
     if res.status_code != 200:
         log.error(f'Bad status code {res.status_code} from Patreon when getting token')

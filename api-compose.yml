@@ -1,0 +1,14 @@
+version: "3.7"
+services:
+    bstsleuth_api:
+        container_name: bstsleuth_api
+        build:
+            context: .
+            dockerfile: docker/API
+        environment:
+            LOG_LEVEL: DEBUG
+            UV_PORT: 8444
+        restart: always
+        entrypoint: python -u /src/fsstalker/api/app.py
+        ports:
+            - 8444:8444

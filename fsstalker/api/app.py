@@ -1,22 +1,23 @@
 import os
+import sys
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-
+sys.path.append('./')
 from fsstalker.api.endpoints.auth_endpoint import auth_router
 from fsstalker.api.endpoints.notification_service_endpoint import notification_svc_router
 from fsstalker.api.endpoints.sent_notification_endpoint import sent_notification_router
 from fsstalker.api.endpoints.user_endpoint import user_router
 from fsstalker.core.config import Config
-from fsstalker.core.db.unit_of_work_manager import UnitOfWorkManager
-from fsstalker.core.util.helpers import get_db_engine
 from fsstalker.api.endpoints.watch_endpoint import watch_router
 
 app = FastAPI()
 config = Config()
 allowed_origins = [
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'https://bstsleuth.com',
+    'https://www.bstsleuth.com'
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -25,14 +26,16 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*']
 )
-"""
-@app.on_event('startup')
-async def startup():
-    app.state.db = UnitOfWorkManager(get_db_engine(config))
-"""
+
+heath_router = APIRouter()
+@heath_router.get('/health')
+def get_health():
+    return {'status': 'OK'}
+
 app.include_router(watch_router)
 app.include_router(notification_svc_router)
 app.include_router(user_router)
 app.include_router(sent_notification_router)
 app.include_router(auth_router)
-uvicorn.run(app, host="0.0.0.0", port=os.getenv('port', 8989))
+app.include_router(heath_router)
+uvicorn.run(app, host="0.0.0.0", port=int(os.getenv('UV_PORT', 8989)))
