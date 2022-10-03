@@ -1,3 +1,5 @@
+from typing import NoReturn
+
 from fsstalker.core.db.db_models import UserNotification
 from fsstalker.core.db.repo.repo_base import RepoBase
 

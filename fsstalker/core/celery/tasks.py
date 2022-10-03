@@ -9,7 +9,7 @@ from praw.models import Submission
 
 from fsstalker.core.celery.app import celery
 from fsstalker.core.config import Config
-from fsstalker.core.db.db_models import SentNotification, CheckedPost
+from fsstalker.core.db.db_models import SentNotification, CheckedPost, UserNotification
 from fsstalker.core.db.unit_of_work_manager import UnitOfWorkManager
 from fsstalker.core.logging import log
 from fsstalker.core.util.helpers import get_db_engine, get_reddit_instance, post_includes_words
@@ -59,6 +59,12 @@ def send_notification_task(self, watch_id: int, match: Text, submission: Submiss
                 watch=watch,
                 triggered_word=match,
                 submission_created_at=datetime.utcfromtimestamp(submission.created_utc)
+            )
+        )
+        uow.user_notifications.add(
+            UserNotification(
+                message=f'Found match for watch {watch.name}. https://redd.it/{submission.id}',
+                owner_id=watch.owner_id
             )
         )
         try:

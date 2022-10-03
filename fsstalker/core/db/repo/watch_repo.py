@@ -17,7 +17,7 @@ class WatchRepo(RepoBase):
         return self.db_session.query(Watch).options(joinedload(Watch.notification_services)).filter(Watch.id == id).first()
 
     def get_by_owner_id(self, owner_id: int) -> list[Watch]:
-        return self.db_session.query(Watch).options(joinedload(Watch.notification_services)).filter(Watch.owner_id == owner_id).order_by(Watch.created_at.asc()).all()
+        return self.db_session.query(Watch).options(joinedload(Watch.notification_services)).filter(Watch.owner_id == owner_id).order_by(Watch.created_at.desc()).all()
 
     def get_active_by_owner_id(self, owner_id: int) -> list[Watch]:
         return self.db_session.query(Watch).options(joinedload(Watch.notification_services)).filter(

@@ -9,7 +9,7 @@ class NotificationServiceRepo(RepoBase):
         super().__init__(db_session)
 
     def get_by_owner(self, owner: Text) -> List[NotificationService]:
-        return self.db_session.query(NotificationService).filter(NotificationService.owner == owner).all()
+        return self.db_session.query(NotificationService).filter(NotificationService.owner == owner).order_by(NotificationService.created_at.desc()).all()
 
     def get_all(self, limit: int = None, offset: int = None) -> List[NotificationService]:
         return self.db_session.query(NotificationService).limit(limit).offset(offset).all()
