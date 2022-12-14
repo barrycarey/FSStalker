@@ -58,13 +58,17 @@ def send_notification_task(self, watch_id: int, match: Text, submission: Submiss
                 triggered_post=submission.id,
                 watch=watch,
                 triggered_word=match,
-                submission_created_at=datetime.utcfromtimestamp(submission.created_utc)
+                submission_created_at=datetime.utcfromtimestamp(submission.created_utc),
+                actual_delay=delta.seconds,
+                expected_delay=watch.owner.patreon_tier.notify_delay,
+                owner_id=watch.owner_id
             )
         )
         uow.user_notifications.add(
             UserNotification(
                 message=f'Found match for watch {watch.name}. https://redd.it/{submission.id}',
-                owner_id=watch.owner_id
+                owner_id=watch.owner_id,
+                type='watch_alert'
             )
         )
         try:

@@ -5,9 +5,10 @@ import uvicorn
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
-from fsstalker.api.endpoints.user_notification_endpoint import user_notification_router
+
 
 sys.path.append('./')
+from fsstalker.api.endpoints.user_notification_endpoint import user_notification_router
 from fsstalker.api.endpoints.auth_endpoint import auth_router
 from fsstalker.api.endpoints.notification_service_endpoint import notification_svc_router
 from fsstalker.api.endpoints.sent_notification_endpoint import sent_notification_router

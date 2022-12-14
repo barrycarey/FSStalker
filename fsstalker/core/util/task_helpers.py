@@ -153,7 +153,12 @@ def patreon_member_update(member_data: dict, uowm: UnitOfWorkManager) -> NoRetur
             if patreon_user.status != 'active_patron' and user.patreon_tier_id > 1:
                 log.info('%s is inactive on Patreon. Setting to free tier')
                 user.patreon_tier_id = 1
-                user.user_notifications.append(UserNotification(message='Patreon no longer active. You have been changed to the free tier'))
+                user.user_notifications.append(
+                    UserNotification(
+                        message='Patreon no longer active. You have been changed to the free tier',
+                        type='account_alert'
+                    )
+                )
                 continue
 
             tier = uow.patreon_tier.get_by_tier_id(patreon_user.tier)
@@ -184,5 +189,7 @@ def update_watch_limits(uowm: UnitOfWorkManager) -> NoReturn:
                     log.info(f'Disabling over limit watch.  Watch %s for user %s', watch.name, user.username)
                     watch.active = False
                 user.user_notifications.append(UserNotification(
-                    message=f'You have exceeded your allowed watch limit of {str(user.patreon_tier.max_watches)}. We have disabled the oldest {str(excess_watches)}'))
+                    message=f'You have exceeded your allowed watch limit of {str(user.patreon_tier.max_watches)}. We have disabled the oldest {str(excess_watches)}',
+                    type='account_alert'
+                ))
         uow.commit()

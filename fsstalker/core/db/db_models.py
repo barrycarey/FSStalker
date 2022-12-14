@@ -6,13 +6,19 @@ Base = declarative_base()
 
 """
 class WatchToNotification(Base):
-    __tablename__ = 'watch_to_notification'
-    watch_id = Column(Integer, ForeignKey('watch.id'))
-    notification_service_id = Column(Integer, ForeignKey('notification_service.id'))
+    __tablename__ = 'association'
+    left_id = Column(Integer, ForeignKey('left.id'), primary_key=True)
+    right_id = Column(Integer, ForeignKey('right.id'), primary_key=True)
+
+    extra_data = Column(String(50))
+
+    left = relationship('Left', backref=backref('right_association'))
+    right = relationship('Right', backref=backref('left_association'))
 """
 association_table = Table('watch_to_notification', Base.metadata,
-    Column('watch_id', Integer, ForeignKey('watch.id')),
-    Column('notification_service_id', Integer, ForeignKey('notification_service.id'))
+    Column('id', Integer, primary_key=True),
+    Column('watch_id', Integer, ForeignKey('watch.id'), nullable=False),
+    Column('notification_service_id', Integer, ForeignKey('notification_service.id'), nullable=False)
 )
 
 class Watch(Base):
@@ -30,7 +36,7 @@ class Watch(Base):
     name = Column(String(200), nullable=False)
 
     owner = relationship("User", back_populates='watches')
-    sent_notifications = relationship('SentNotification', back_populates='watch')
+    sent_notifications = relationship('SentNotification', back_populates='watch', cascade='all, delete-orphan')
     notification_services = relationship(
         'NotificationService',
         secondary=association_table,
@@ -60,8 +66,12 @@ class SentNotification(Base):
     submission_created_at = Column(DateTime, nullable=False)
     triggered_post = Column(String(6), nullable=False)
     triggered_word = Column(String(100), nullable=False)
+    expected_delay = Column(Integer, nullable=False)
+    actual_delay = Column(Integer, nullable=False)
     watch_id = Column(Integer, ForeignKey('watch.id'))
+    owner_id = Column(Integer, ForeignKey('user.id'))
     watch = relationship('Watch', back_populates='sent_notifications')
+    owner = relationship('User', back_populates='sent_notifications')
 
 class CheckedPost(Base):
     __tablename__ = 'checked_post'
@@ -82,6 +92,7 @@ class User(Base):
     notification_services = relationship("NotificationService", back_populates='owner')
     patreon_tier = relationship('PatreonTier')
     user_notifications = relationship('UserNotification', back_populates='owner')
+    sent_notifications = relationship('SentNotification', back_populates='owner')
 
     def __repr__(self):
         return f'User {self.username}'
@@ -102,5 +113,5 @@ class UserNotification(Base):
     read = Column(Boolean, default=False)
     owner_id = Column(Integer, ForeignKey('user.id'))
     message = Column(String(300), nullable=False)
-
+    type = Column(String(20), nullable=False)
     owner = relationship('User', back_populates='user_notifications')

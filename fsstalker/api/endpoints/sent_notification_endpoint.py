@@ -20,9 +20,9 @@ def get_watches(username: str, token: str, uowm: UnitOfWorkManager = Depends(get
         user = uow.user.get_or_create_by_username(user_data['name'])
         if not user:
             raise HTTPException(status_code=404, detail=f'User {user} not found')
-        if user.username.lower() != username and not user.is_mod:
+        if user.username.lower() != username.lower() and not user.is_mod:
             raise HTTPException(status_code=403, detail='Unauthorized')
-
-        return uow.watch.get_by_owner_id_with_notifications(user.id)
+        res = uow.sent_notification.get_by_owner_id(user.id)
+        return res
 
 
